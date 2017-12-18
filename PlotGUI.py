@@ -8,7 +8,8 @@ import matplotlib
 
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
-from matplotlib.figure import Figure, SubplotBase
+from matplotlib.figure import Figure, Axes
+# from matplotlib._axes import Axes
 from matplotlib.lines import Line2D
 import matplotlib.animation as animation
 from matplotlib import style
@@ -80,8 +81,9 @@ class PlotGUI(tk.Tk):
         f2 = Figure()
         a2 = f2.add_subplot(111)
         a2.clear()
-        lines2 = a2.plot(xlist, ylist)
+        lines2 = a2.plot(xlist, ylist, linestyle=':')
         line2 = Line2D(xlist, ylist)
+        setattr(a2, 'myline', line2)
         # print(type(lines2), len(lines2))
         # pprint.pprint(lines2[0].__dict__)
 
@@ -112,13 +114,28 @@ class PlotGUI(tk.Tk):
         a3.clear()
         pprint(a2.lines[0])
         pprint(line2)
-        # for l in a2.lines:
-        a3.add_line(copy(line2)) # This works
+
+        line2 = Line2D(xlist, ylist)
+        # a3.add_line(copy(line2)) # This works
         # a3.add_line(copy(a2.lines[0])) # This doesn't work
+
         line2 = a2.get_lines()[0]
-        line2.axes = None
-        line2.figure = None
-        line2.set_transform(a2.transData)
+        line3 = copy(line2)
+        line3.figure = None
+        line3._axes = None
+        # a3.add_line(line3) # This doesn't work
+
+        line3 = getattr(a2, 'myline')
+        # a3.add_line(line3) # This works.
+
+        line2 = a2.get_lines()[0]
+        print(type(line2))
+        # a3.plot(line2.get_xdata(), line2.get_ydata()) # This works.
+
+        pprint(line2.__dict__)
+        line3 = Line2D(xdata=line2.get_xdata(), ydata=line2.get_ydata(), linestyle=line2.get_linestyle())
+        # line3.update_from(line2) # This is wrong.
+        a3.add_line(line3) # This works
 
         # a3.add_line(line2) # This doesn't work
 
@@ -138,6 +155,7 @@ class PlotGUI(tk.Tk):
 
 
         self.show_frame(0)
+
 
     def show_frame(self, cont):
         frame = self.frames[cont % len(self.frames)]
@@ -170,6 +188,24 @@ class GraphPage(tk.Frame):
         toolbar = NavigationToolbar2TkAgg(canvas, self)
         toolbar.update()
         canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+
+
+class MyAxes(Axes):
+    def __init__(self, *args, **kwargs):
+        self.mylines = []
+        Axes.__init__(self, *args, **kwargs)
+
+    def plot(self, *args, **kwargs):
+        for line in self._get_lines(*args, **kwargs):
+            self.mylines.append(line)
+
+        Axes.plot(self, *args, **kwargs)
+
+
+class MyFigure(Figure):
+    def __init__(self, *args, **kwargs):
+        Figure.__init__(self, *args, **kwargs)
 
 
 app = PlotGUI()
