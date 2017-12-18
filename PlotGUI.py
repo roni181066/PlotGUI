@@ -57,99 +57,39 @@ class PlotGUI(tk.Tk):
         tk.Tk.config(self, menu=menubar)
 
         self.frames = {}
+        self.figs = {}
 
-        i = 0
-        xlist = [0, 1, 2]
-        ylist = [1+i*2, 7+i*2, 5+i*2]
-        f1 = Figure()
-        a1 = f1.add_subplot(111)
-        a1.clear()
-        lines1 = a1.plot(xlist, ylist)
-        line1 = Line2D(xlist, ylist)
-        # pprint(a1.lines[0].__dict__)
+        for i in [0, 1]:
+            xlist = [0, 1, 2]
+            ylist = [1+i*2, 7+i*2, 5+i*2]
+            self.figs[i] = Figure()
+            ax = self.figs[i].add_subplot(111)
+            ax.clear()
+            ax.plot(xlist, ylist)
 
-        frame = GraphPage(container, self, int(i), fig=f1)
+            frame = GraphPage(container, self, int(i), fig=self.figs[i])
 
-        self.frames[i] = frame
+            self.frames[i] = frame
 
-        frame.grid(row=0, column=0, sticky="nsew")
+            frame.grid(row=0, column=0, sticky="nsew")
 
-        i = 1
-        xlist = [0, 1, 2]
-        ylist = [1 + i * 2, 7 + i * 2, 5 + i * 2]
-
-        f2 = Figure()
-        a2 = f2.add_subplot(111)
-        a2.clear()
-        lines2 = a2.plot(xlist, ylist, linestyle=':')
-        line2 = Line2D(xlist, ylist)
-        setattr(a2, 'myline', line2)
-        # print(type(lines2), len(lines2))
-        # pprint.pprint(lines2[0].__dict__)
-
-        frame = GraphPage(container, self, int(i), fig=f2)
-
-        self.frames[i] = frame
-
-        frame.grid(row=0, column=0, sticky="nsew")
-
-        # buf = io.BytesIO()
-        # pickle.dump(f1, buf)
-        # buf.seek(0)
-        # f3 = pickle.load(buf)
-        # a3 = f3.get_axes()[0]
-
-        # pprint(f3.__dict__)
-        # line1 = f1.gca().lines[0]
-        # line2 = f2.gca().lines[0]
-        # a3.add_line(copy(line2))
-        # pprint(len(a3.lines))
-        # pprint(f3.gca().lines[0].__dict__)
-        i = 2
 
         f3 = Figure()
         a3 = f3.add_subplot(111)
         pprint(a3.figure)
         pprint(f3.axes)
         a3.clear()
-        pprint(a2.lines[0])
-        pprint(line2)
 
-        line2 = Line2D(xlist, ylist)
-        # a3.add_line(copy(line2)) # This works
-        # a3.add_line(copy(a2.lines[0])) # This doesn't work
 
-        line2 = a2.get_lines()[0]
-        line3 = copy(line2)
-        line3.figure = None
-        line3._axes = None
-        # a3.add_line(line3) # This doesn't work
-
-        line3 = getattr(a2, 'myline')
-        # a3.add_line(line3) # This works.
-
-        line2 = a2.get_lines()[0]
-        print(type(line2))
-        # a3.plot(line2.get_xdata(), line2.get_ydata()) # This works.
-
-        pprint(line2.__dict__)
+        line2 = self.figs[1].axes[0].get_lines()[0]
         line3 = Line2D(xdata=line2.get_xdata(), ydata=line2.get_ydata(), linestyle=line2.get_linestyle())
-        # line3.update_from(line2) # This is wrong.
         a3.add_line(line3) # This works
-
-        # a3.add_line(line2) # This doesn't work
-
-        # buf = io.BytesIO()
-        # pickle.dump(line2, buf)
-        # buf.seek(0)
-        # line2 = pickle.load(buf)
-        # a3.add_line(copy(line2)) # This doesn't work
 
         a3.autoscale()
 
-        frame = GraphPage(container, self, int(i), fig=f3)
+        frame = GraphPage(container, self, 2, fig=f3)
 
-        self.frames[i] = frame
+        self.frames[2] = frame
 
         frame.grid(row=0, column=0, sticky="nsew")
 
