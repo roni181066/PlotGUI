@@ -73,40 +73,44 @@ class PlotGUI(tk.Tk):
 
     def compare_figs(self):
         d = Compare2Dialog(self)
+        if d.result is None:
+            return
         comp2 = d.result[0]
+        if comp2 is None:
+            return
         shift_x = d.result[1]
         shift_y = d.result[2]
 
         hh = []
         ll = []
-        if comp2 is not None:
-            new_fig = len(self.figs)
-            self.figs[new_fig] = Figure()
-            new_ax = self.figs[new_fig].add_subplot(111)
-            new_ax.clear()
+        new_fig = len(self.figs)
+        self.figs[new_fig] = Figure()
+        new_ax = self.figs[new_fig].add_subplot(111)
 
-            for ax in self.figs[self.curr_frame].axes:
-                h, l = ax.get_legend_handles_labels()
-                hh += h
-                ll += l
-                for line in ax.get_lines():
-                    new_line = self.copy_line(line)
-                    new_ax.add_line(new_line)
+        for ax in self.figs[self.curr_frame].axes:
+            print('ax')
+            new_ax.update_from(ax)
+            h, l = ax.get_legend_handles_labels()
+            hh += h
+            ll += l
+            for line in ax.get_lines():
+                new_line = self.copy_line(line)
+                new_ax.add_line(new_line)
 
-            for ax in self.figs[comp2].axes:
-                h, l = ax.get_legend_handles_labels()
-                hh += h
-                ll += l
-                for line in ax.get_lines():
-                    new_line = self.copy_line(line, shift_x=shift_x, shift_y=shift_y)
-                    new_ax.add_line(new_line)
+        for ax in self.figs[comp2].axes:
+            h, l = ax.get_legend_handles_labels()
+            hh += h
+            ll += l
+            for line in ax.get_lines():
+                new_line = self.copy_line(line, shift_x=shift_x, shift_y=shift_y)
+                new_ax.add_line(new_line)
 
-            new_ax.legend(hh, ll)
-            new_ax.autoscale()
+        new_ax.legend(hh, ll)
+        new_ax.autoscale()
 
-            frame = GraphPage(self.container, new_fig, fig=self.figs[new_fig])
-            self.frames[new_fig] = frame
-            frame.grid(row=0, column=0, sticky="nsew")
+        frame = GraphPage(self.container, new_fig, fig=self.figs[new_fig])
+        self.frames[new_fig] = frame
+        frame.grid(row=0, column=0, sticky="nsew")
 
     @staticmethod
     def copy_line(old_line, shift_x=0., shift_y=0.):
