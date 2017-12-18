@@ -1,21 +1,14 @@
-from pprint import pprint
-from copy import deepcopy, copy
-import pickle
-import io
-
-
 import matplotlib
 
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
-from matplotlib.figure import Figure, Axes
-# from matplotlib._axes import Axes
+from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
-import matplotlib.animation as animation
 from matplotlib import style
 
 import tkinter as tk
 from tkinter import ttk
+from tkinter.simpledialog import Dialog
 
 LARGE_FONT = ("Verdana", 12)
 NORM_FONT = ("Helvetica", 10)
@@ -36,7 +29,7 @@ def popupmsg(msg):
 
 class PlotGUI(tk.Tk):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, figs, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
 
         # tk.Tk.iconbitmap(self, default="clienticon.ico")
@@ -48,61 +41,88 @@ class PlotGUI(tk.Tk):
         self.container.grid_columnconfigure(0, weight=1)
 
         menubar = tk.Menu(self.container)
+
         filemenu = tk.Menu(menubar, tearoff=1)
         filemenu.add_command(label="Save settings", command=lambda: popupmsg('Not supported just yet!'))
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=quit)
         menubar.add_cascade(label="File", menu=filemenu)
 
+        combine_menu = tk.Menu(menubar, tearoff=1)
+        combine_menu.add_command(label="Compare 2", command=self.compare_figs)
+        menubar.add_cascade(label="Combine", menu=combine_menu)
+
         tk.Tk.config(self, menu=menubar)
 
         self.curr_frame = 0
 
-        button1 = ttk.Button(self, text="Next",
-                             command=lambda: self.show_frame(self.curr_frame+1))
-        button1.pack()
+        prev_button = ttk.Button(self, text="Prev", command=self.prev_frame)
+        prev_button.pack(side=tk.LEFT)
+        next_button = ttk.Button(self, text="Next", command=self.next_frame)
+        next_button.pack(side=tk.LEFT)
 
         self.frames = {}
-        self.figs = {}
+        self.figs = figs
 
-        for i in [0, 1]:
-            xlist = [0, 1, 2]
-            ylist = [1+i*2, 7+i*2, 5+i*2]
-            self.figs[i] = Figure()
-            ax = self.figs[i].add_subplot(111)
-            ax.clear()
-            ax.plot(xlist, ylist, lw=i+3)
-
-            frame = GraphPage(self.container, i, fig=self.figs[i])
-
+        for i, f in enumerate(figs):
+            frame = GraphPage(self.container, i, fig=figs[i])
             self.frames[i] = frame
-
             frame.grid(row=0, column=0, sticky="nsew")
 
-
-        self.compare_figs(0, 1)
+        # self.compare_figs(0, 1)
 
         self.show_frame(self.curr_frame)
 
+    def compare_figs(self):
+        d = Compare2Dialog(self)
+        comp2 = d.result[0]
+        shift_x = d.result[1]
+        shift_y = d.result[2]
 
-    def compare_figs(self, n1, n2):
-        new_fig = len(self.figs)
-        self.figs[new_fig] = Figure()
-        new_ax = self.figs[new_fig].add_subplot(111)
-        new_ax.clear()
+        if comp2 is not None:
+            new_fig = len(self.figs)
+            self.figs[new_fig] = Figure()
+            new_ax = self.figs[new_fig].add_subplot(111)
+            new_ax.clear()
 
-        for ax in self.figs[n1].axes + self.figs[n2].axes:
-            for line in ax.get_lines():
-                new_line = Line2D(xdata=line.get_xdata(), ydata=line.get_ydata(), linewidth=line.get_linewidth())
-                new_ax.add_line(new_line)  # This works
+            for ax in self.figs[self.curr_frame].axes:
+                for line in ax.get_lines():
+                    new_line = self.copy_line(line)
+                    new_ax.add_line(new_line)
 
-        new_ax.autoscale()
+            for ax in self.figs[comp2].axes:
+                for line in ax.get_lines():
+                    new_line = self.copy_line(line, shift_x=shift_x, shift_y=shift_y)
+                    new_ax.add_line(new_line)
 
-        frame = GraphPage(self.container, new_fig, fig=self.figs[new_fig])
+            new_ax.autoscale()
 
-        self.frames[new_fig] = frame
+            frame = GraphPage(self.container, new_fig, fig=self.figs[new_fig])
 
-        frame.grid(row=0, column=0, sticky="nsew")
+            self.frames[new_fig] = frame
+
+            frame.grid(row=0, column=0, sticky="nsew")
+
+    @staticmethod
+    def copy_line(old_line, shift_x=0., shift_y=0.):
+        return Line2D(
+            xdata=old_line.get_xdata()+shift_x, ydata=old_line.get_ydata()+shift_y,
+            color=old_line.get_color(),
+            linestyle=old_line.get_linestyle(),
+            linewidth=old_line.get_linewidth(),
+            marker=old_line.get_marker(),
+            markeredgecolor=old_line.get_markeredgecolor(),
+            markeredgewidth=old_line.get_markeredgewidth(),
+            markerfacecolor=old_line.get_markerfacecolor(),
+            markerfacecoloralt=old_line.get_markerfacecoloralt(),
+            markersize=old_line.get_markersize()
+        )
+
+    def prev_frame(self):
+        self.show_frame(self.curr_frame-1)
+
+    def next_frame(self):
+        self.show_frame(self.curr_frame+1)
 
     def show_frame(self, cont):
         self.curr_frame = cont % len(self.frames)
@@ -125,25 +145,34 @@ class GraphPage(tk.Frame):
         canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
 
+class Compare2Dialog(Dialog):
 
-class MyAxes(Axes):
-    def __init__(self, *args, **kwargs):
-        self.mylines = []
-        Axes.__init__(self, *args, **kwargs)
+    def body(self, master):
 
-    def plot(self, *args, **kwargs):
-        for line in self._get_lines(*args, **kwargs):
-            self.mylines.append(line)
+        tk.Label(master, text="Enter figure #:").grid(row=0)
+        tk.Label(master, text="Enter shift X:").grid(row=1)
+        tk.Label(master, text="Enter shift Y:").grid(row=2)
 
-        Axes.plot(self, *args, **kwargs)
+        self.comp2 = tk.Entry(master)
+        self.shift_x = tk.Entry(master)
+        self.shift_y = tk.Entry(master)
 
+        self.comp2.grid(row=0, column=1)
+        self.shift_x.grid(row=1, column=1)
+        self.shift_y.grid(row=2, column=1)
+        return self.comp2 # initial focus
 
-class MyFigure(Figure):
-    def __init__(self, *args, **kwargs):
-        Figure.__init__(self, *args, **kwargs)
-
-
-app = PlotGUI()
-app.geometry('1280x720')
-# ani = animation.FuncAnimation(f, animate, interval=1000)
-app.mainloop()
+    def apply(self):
+        try:
+            comp2 = int(self.comp2.get())
+        except:
+            comp2 = None
+        try:
+            shift_x = float(self.shift_x.get())
+        except:
+            shift_x = 0.
+        try:
+            shift_y = float(self.shift_y.get())
+        except:
+            shift_y = 0.
+        self.result = comp2, shift_x, shift_y
