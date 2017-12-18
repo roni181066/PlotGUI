@@ -8,7 +8,8 @@ for i in [0, 1]:
     figs[i] = Figure()
     ax = figs[i].add_subplot(111)
     ax.clear()
-    ax.plot(xlist, ylist, lw=i + 3)
+    ax.plot(xlist, ylist, lw=i + 3, label=str(i))
+    ax.legend(loc=i+1)
 
 app = PlotGUI(figs=figs)
 app.geometry('1280x720')

@@ -69,8 +69,6 @@ class PlotGUI(tk.Tk):
             self.frames[i] = frame
             frame.grid(row=0, column=0, sticky="nsew")
 
-        # self.compare_figs(0, 1)
-
         self.show_frame(self.curr_frame)
 
     def compare_figs(self):
@@ -79,6 +77,8 @@ class PlotGUI(tk.Tk):
         shift_x = d.result[1]
         shift_y = d.result[2]
 
+        hh = []
+        ll = []
         if comp2 is not None:
             new_fig = len(self.figs)
             self.figs[new_fig] = Figure()
@@ -86,21 +86,26 @@ class PlotGUI(tk.Tk):
             new_ax.clear()
 
             for ax in self.figs[self.curr_frame].axes:
+                h, l = ax.get_legend_handles_labels()
+                hh += h
+                ll += l
                 for line in ax.get_lines():
                     new_line = self.copy_line(line)
                     new_ax.add_line(new_line)
 
             for ax in self.figs[comp2].axes:
+                h, l = ax.get_legend_handles_labels()
+                hh += h
+                ll += l
                 for line in ax.get_lines():
                     new_line = self.copy_line(line, shift_x=shift_x, shift_y=shift_y)
                     new_ax.add_line(new_line)
 
+            new_ax.legend(hh, ll)
             new_ax.autoscale()
 
             frame = GraphPage(self.container, new_fig, fig=self.figs[new_fig])
-
             self.frames[new_fig] = frame
-
             frame.grid(row=0, column=0, sticky="nsew")
 
     @staticmethod
@@ -115,7 +120,8 @@ class PlotGUI(tk.Tk):
             markeredgewidth=old_line.get_markeredgewidth(),
             markerfacecolor=old_line.get_markerfacecolor(),
             markerfacecoloralt=old_line.get_markerfacecoloralt(),
-            markersize=old_line.get_markersize()
+            markersize=old_line.get_markersize(),
+            label=old_line.get_label()
         )
 
     def prev_frame(self):
