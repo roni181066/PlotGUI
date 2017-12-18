@@ -42,12 +42,12 @@ class PlotGUI(tk.Tk):
         # tk.Tk.iconbitmap(self, default="clienticon.ico")
         tk.Tk.wm_title(self, "My PlotGUI")
 
-        container = tk.Frame(self)
-        container.pack(side="top", fill="both", expand=True)
-        container.grid_rowconfigure(0, weight=1)
-        container.grid_columnconfigure(0, weight=1)
+        self.container = tk.Frame(self)
+        self.container.pack(side="top", fill="both", expand=True)
+        self.container.grid_rowconfigure(0, weight=1)
+        self.container.grid_columnconfigure(0, weight=1)
 
-        menubar = tk.Menu(container)
+        menubar = tk.Menu(self.container)
         filemenu = tk.Menu(menubar, tearoff=1)
         filemenu.add_command(label="Save settings", command=lambda: popupmsg('Not supported just yet!'))
         filemenu.add_separator()
@@ -55,6 +55,12 @@ class PlotGUI(tk.Tk):
         menubar.add_cascade(label="File", menu=filemenu)
 
         tk.Tk.config(self, menu=menubar)
+
+        self.curr_frame = 0
+
+        button1 = ttk.Button(self, text="Next",
+                             command=lambda: self.show_frame(self.curr_frame+1))
+        button1.pack()
 
         self.frames = {}
         self.figs = {}
@@ -65,61 +71,50 @@ class PlotGUI(tk.Tk):
             self.figs[i] = Figure()
             ax = self.figs[i].add_subplot(111)
             ax.clear()
-            ax.plot(xlist, ylist)
+            ax.plot(xlist, ylist, lw=i+3)
 
-            frame = GraphPage(container, self, int(i), fig=self.figs[i])
+            frame = GraphPage(self.container, i, fig=self.figs[i])
 
             self.frames[i] = frame
 
             frame.grid(row=0, column=0, sticky="nsew")
 
 
-        f3 = Figure()
-        a3 = f3.add_subplot(111)
-        pprint(a3.figure)
-        pprint(f3.axes)
-        a3.clear()
+        self.compare_figs(0, 1)
+
+        self.show_frame(self.curr_frame)
 
 
-        line2 = self.figs[1].axes[0].get_lines()[0]
-        line3 = Line2D(xdata=line2.get_xdata(), ydata=line2.get_ydata(), linestyle=line2.get_linestyle())
-        a3.add_line(line3) # This works
+    def compare_figs(self, n1, n2):
+        new_fig = len(self.figs)
+        self.figs[new_fig] = Figure()
+        new_ax = self.figs[new_fig].add_subplot(111)
+        new_ax.clear()
 
-        a3.autoscale()
+        for ax in self.figs[n1].axes + self.figs[n2].axes:
+            for line in ax.get_lines():
+                new_line = Line2D(xdata=line.get_xdata(), ydata=line.get_ydata(), linewidth=line.get_linewidth())
+                new_ax.add_line(new_line)  # This works
 
-        frame = GraphPage(container, self, 2, fig=f3)
+        new_ax.autoscale()
 
-        self.frames[2] = frame
+        frame = GraphPage(self.container, new_fig, fig=self.figs[new_fig])
+
+        self.frames[new_fig] = frame
 
         frame.grid(row=0, column=0, sticky="nsew")
 
-
-        self.show_frame(0)
-
-
     def show_frame(self, cont):
-        frame = self.frames[cont % len(self.frames)]
-        frame.tkraise()
+        self.curr_frame = cont % len(self.frames)
+        self.frames[self.curr_frame].tkraise()
 
 
 class GraphPage(tk.Frame):
 
-    def __init__(self, parent, controller, num, fig):
+    def __init__(self, parent, num, fig):
         tk.Frame.__init__(self, parent)
         label = tk.Label(self, text="Graph Page "+str(num), font=LARGE_FONT)
         label.pack(pady=10, padx=10)
-
-        button1 = ttk.Button(self, text="Next",
-                             command=lambda: controller.show_frame(num+1))
-        button1.pack()
-
-        # f = Figure()
-        # a = f.add_subplot(111)
-        # pprint.pprint(a)
-        # pprint.pprint(a.__dict__)
-        # a.clear()
-        # lines = a.plot(xlist, ylist)
-        # pprint.pprint(a.__dict__)
 
         canvas = FigureCanvasTkAgg(fig, self)
         canvas.show()
