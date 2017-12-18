@@ -81,15 +81,19 @@ class PlotGUI(tk.Tk):
         shift_x = d.result[1]
         shift_y = d.result[2]
 
+        if self.have_non_twin_subplots(self.figs[self.curr_frame]) or self.have_non_twin_subplots(self.figs[comp2]):
+            raise NotImplementedError('Comparing multiple subplot figures is not supported')
+
         hh = []
         ll = []
         new_fig = len(self.figs)
         self.figs[new_fig] = Figure()
         new_ax = self.figs[new_fig].add_subplot(111)
 
+
         for ax in self.figs[self.curr_frame].axes:
-            print('ax')
-            new_ax.update_from(ax)
+            # print(ax.bbox.bounds)
+            # new_ax.update_from(ax)
             h, l = ax.get_legend_handles_labels()
             hh += h
             ll += l
@@ -111,6 +115,17 @@ class PlotGUI(tk.Tk):
         frame = GraphPage(self.container, new_fig, fig=self.figs[new_fig])
         self.frames[new_fig] = frame
         frame.grid(row=0, column=0, sticky="nsew")
+
+    @staticmethod
+    def have_non_twin_subplots(fig):
+        have = False
+        ax = fig.axes[0]
+        for other_ax in fig.axes:
+            if other_ax is ax:
+                continue
+            if other_ax.bbox.bounds != ax.bbox.bounds:
+                have = True
+        return have
 
     @staticmethod
     def copy_line(old_line, shift_x=0., shift_y=0.):
