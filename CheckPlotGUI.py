@@ -12,6 +12,7 @@ for i in [0, 1]:
     # ax = figs[i].add_subplot(111)
     plt.plot(xlist, ylist, lw=i + 3, label=str(i))
     plt.legend(loc=i+1)
+    plt.ylabel('YYY')
 
     # ax.plot(xlist, ylist, lw=i + 3, label=str(i))
     # ax.legend(loc=i+1)
@@ -21,8 +22,9 @@ for i in [0, 1]:
 
     # ax2 = ax.twinx()
     ax2 = plt.twinx()
-    ax2.plot(x2, y2, label=str(100*i+1))
-    ax2.legend(loc=i+3)
+    plt.plot(x2, y2, label=str(100*i+1))
+    plt.legend(loc=i+3)
+    plt.ylabel('yyy')
 
 
 app = PlotGUI(figs=figs)
