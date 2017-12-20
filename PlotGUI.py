@@ -6,6 +6,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from matplotlib.figure import Figure
 from matplotlib.artist import getp
 from matplotlib.lines import Line2D
+import matplotlib.legend as mlegend
 from matplotlib import style
 
 import tkinter as tk
@@ -83,90 +84,28 @@ class PlotGUI(tk.Tk):
         shift_x = d.result[1]
         shift_y = d.result[2]
 
-        if self.have_non_twin_subplots(self.figs[self.curr_frame]) or self.have_non_twin_subplots(self.figs[comp2]):
-            popupmsg('Comparing multiple subplot figures is not supported')
-            raise NotImplementedError('Comparing multiple subplot figures is not supported')
-
         new_fig = len(self.figs)
         self.figs[new_fig] = Figure()
-        # new_ax = self.figs[new_fig].add_subplot(111)
-
         new_ax = self.figs[new_fig].add_subplot(111)
-        twinx_ax = None
-        twiny_ax = None
-        hh = {}
-        ll = {}
+
         for ax in self.figs[self.curr_frame].axes:
-            i_am_twinx = getattr(ax, '_sharex') is not None
-            i_am_twiny = getattr(ax, '_sharey') is not None
-            if not i_am_twinx and not i_am_twiny:
-                self.copy_axes_properties(source=ax, target=new_ax)
-            elif i_am_twinx:
-                if twinx_ax is not None:
-                    popupmsg('Comparing plots with multiple twinx is not supported')
-                    raise NotImplementedError('Comparing plots with multiple twinx is not supported')
-                else:
-                    twinx_ax = new_ax.twinx()
-                    self.copy_axes_properties(source=ax, target=twinx_ax)
-            elif i_am_twiny:
-                if twiny_ax is not None:
-                    popupmsg('Comparing plots with multiple twiny is not supported')
-                    raise NotImplementedError('Comparing plots with multiple twiny is not supported')
-                else:
-                    twiny_ax = new_ax.twiny()
-                    self.copy_axes_properties(source=ax, target=twiny_ax)
+            for line in ax.get_lines():
+                new_line = self.copy_line(line)
+                new_ax.add_line(new_line)
 
+        for ax in self.figs[comp2].axes:
+            for line in ax.get_lines():
+                new_line = self.copy_line(line)
+                new_line.set_xdata(new_line.get_xdata()+shift_x)
+                new_line.set_ydata(new_line.get_ydata()+shift_y)
+                new_ax.add_line(new_line)
 
-            # h, l = ax.get_legend_handles_labels()
-            # hh[position] = h
-            # ll[position] = l
-            # for line in ax.get_lines():
-            #     new_line = self.copy_line(line)
-            #     new_ax[position].add_line(new_line)
-
-        # for ax in self.figs[comp2].axes:
-        #     position = ax.xaxis.get_ticks_position(), ax.yaxis.get_ticks_position()
-        #     h, l = ax.get_legend_handles_labels()
-        #     hh[position] += h
-        #     ll[position] += l
-        #     for line in ax.get_lines():
-        #         new_line = self.copy_line(line, shift_x=shift_x, shift_y=shift_y)
-        #         new_ax[position].add_line(new_line)
-        #
-        # for position in new_ax.keys():
-        #     new_ax[position].legend(hh[position], ll[position])
-        #     new_ax[position].autoscale()
+        new_ax.legend()
+        new_ax.autoscale()
 
         frame = GraphPage(self.container, new_fig, fig=self.figs[new_fig])
         self.frames[new_fig] = frame
         frame.grid(row=0, column=0, sticky="nsew")
-
-    def copy_axes_properties(self, source, target):
-        target.xaxis.set_ticks_position(source.xaxis.get_ticks_position())
-        target.yaxis.set_ticks_position(source.yaxis.get_ticks_position())
-        target.xaxis.set_label_position(source.xaxis.get_label_position())
-        target.yaxis.set_label_position(source.yaxis.get_label_position())
-        target.xaxis.set_label_text(source.xaxis.get_label_text())
-        target.yaxis.set_label_text(source.yaxis.get_label_text())
-
-        for line in source.get_lines():
-            new_line = self.copy_line(line)
-            target.add_line(new_line)
-
-        h, l = source.get_legend_handles_labels()
-        target.legend(h ,l)
-        target.autoscale()
-
-    @staticmethod
-    def have_non_twin_subplots(fig):
-        have = False
-        ax = fig.axes[0]
-        for other_ax in fig.axes:
-            if other_ax is ax:
-                continue
-            if other_ax.bbox.bounds != ax.bbox.bounds:
-                have = True
-        return have
 
     @staticmethod
     def copy_line(old_line, shift_x=0., shift_y=0.):

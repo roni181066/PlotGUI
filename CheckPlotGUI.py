@@ -11,8 +11,12 @@ for i in [0, 1]:
     # figs[i], ax = plt.subplots(2) # This is not supported
     # ax = figs[i].add_subplot(111)
     plt.plot(xlist, ylist, lw=i + 3, label=str(i))
-    plt.legend(loc=i+1)
+    # plt.legend(loc=i+1)
+    # plt.legend(loc='upper right')
+    # plt.legend(loc=0)
+    plt.legend()
     plt.ylabel('YYY')
+    plt.xlabel('XXX')
 
     # ax.plot(xlist, ylist, lw=i + 3, label=str(i))
     # ax.legend(loc=i+1)
@@ -21,9 +25,12 @@ for i in [0, 1]:
     y2 = [1 + i * 100, 7 + i * 100, 5 + i * 100]
 
     # ax2 = ax.twinx()
-    ax2 = plt.twinx()
+    plt.twinx()
     plt.plot(x2, y2, label=str(100*i+1))
-    plt.legend(loc=i+3)
+    # plt.legend(loc=i+3)
+    # plt.legend(loc='upper left')
+    # plt.legend(loc=0)
+    plt.legend()
     plt.ylabel('yyy')
 
 
