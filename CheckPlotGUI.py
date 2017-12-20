@@ -1,13 +1,13 @@
 from matplotlib.figure import Figure
-import matplotlib.pyplot as plt
-from PlotGUI import PlotGUI
+# import matplotlib.pyplot as plt
+import PlotGUI as plt
 
-figs = {}
 for i in [0, 1]:
     xlist = [0, 1, 2]
     ylist = [1 + i * 2, 7 + i * 2, 5 + i * 2]
     # figs[i] = Figure()
-    figs[i] = plt.figure()
+    # plt.figure(figsize=(20, 10))
+    plt.figure()
     # figs[i], ax = plt.subplots(2) # This is not supported
     # ax = figs[i].add_subplot(111)
     plt.plot(xlist, ylist, lw=i + 3, label=str(i))
@@ -17,6 +17,7 @@ for i in [0, 1]:
     plt.legend()
     plt.ylabel('YYY')
     plt.xlabel('XXX')
+    plt.title('TITLE')
 
     # ax.plot(xlist, ylist, lw=i + 3, label=str(i))
     # ax.legend(loc=i+1)
@@ -33,12 +34,4 @@ for i in [0, 1]:
     plt.legend()
     plt.ylabel('yyy')
 
-
-app = PlotGUI(figs=figs)
-app.geometry('1280x720')
-# ani = animation.FuncAnimation(f, animate, interval=1000)
-
-# app2 = PlotGUI(figs=figs)
-# app2.mainloop()
-
-app.mainloop()
+plt.show()

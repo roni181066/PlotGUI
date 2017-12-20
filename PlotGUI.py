@@ -8,6 +8,8 @@ from matplotlib.artist import getp
 from matplotlib.lines import Line2D
 import matplotlib.legend as mlegend
 from matplotlib import style
+import matplotlib.pyplot as plto
+from matplotlib.pyplot import *
 
 import tkinter as tk
 from tkinter import ttk
@@ -18,6 +20,20 @@ NORM_FONT = ("Helvetica", 10)
 SMALL_FONT = ("Helvetica", 8)
 
 style.use("ggplot")
+
+figs = {}
+curr_fig = 0
+
+
+def figure(*args, **kwargs):
+    global curr_fig
+    figs[curr_fig] = plto.figure(*args, **kwargs)
+    curr_fig += 1
+
+
+def show():
+    app = PlotGUI(figs=figs)
+    app.mainloop()
 
 
 def popupmsg(msg):
