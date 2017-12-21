@@ -1,19 +1,17 @@
 from copy import copy, deepcopy
+import pickle
+
 import matplotlib
 
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
-from matplotlib.figure import Figure
-from matplotlib.artist import getp
-from matplotlib.lines import Line2D
-import matplotlib.legend as mlegend
-from matplotlib import style
 import matplotlib.pyplot as plto
 from matplotlib.pyplot import *
 
 import tkinter as tk
 from tkinter import ttk
 from tkinter.simpledialog import Dialog
+from tkinter import filedialog
 
 LARGE_FONT = ("Verdana", 12)
 NORM_FONT = ("Helvetica", 10)
@@ -21,13 +19,13 @@ SMALL_FONT = ("Helvetica", 8)
 
 style.use("ggplot")
 
-figs = {}
+figs = []
 curr_fig = 0
 
 
 def figure(*args, **kwargs):
     global curr_fig
-    figs[curr_fig] = plto.figure(*args, **kwargs)
+    figs.append(plto.figure(*args, **kwargs))
     curr_fig += 1
 
 
@@ -64,16 +62,8 @@ class PlotGUI(tk.Tk):
         self.init_menubars()
         self.init_buttons()
 
-        self.curr_frame = 0
-        self.frames = {}
         self.figs = figs
-
-        for i, f in enumerate(figs):
-            frame = GraphPage(self.container, i, fig=figs[i])
-            self.frames[i] = frame
-            frame.grid(row=0, column=0, sticky="nsew")
-
-        self.show_frame(self.curr_frame)
+        self.init_frames()
 
     def init_menubars(self):
         menubar = tk.Menu(self.container)
@@ -81,6 +71,9 @@ class PlotGUI(tk.Tk):
         file_menu = tk.Menu(menubar, tearoff=0)
         # file_menu.add_command(label="Save settings", command=lambda: popupmsg('Not supported just yet!'))
         # file_menu.add_separator()
+        file_menu.add_command(label="Open", command=self.open_figs)
+        file_menu.add_command(label="Add", command=self.add_figs)
+        file_menu.add_command(label="Save", command=self.dump_figs)
         file_menu.add_command(label="Exit", command=quit)
         menubar.add_cascade(label="File", menu=file_menu)
 
@@ -108,6 +101,17 @@ class PlotGUI(tk.Tk):
         goto_entry = ttk.Entry(self, width=5)
         goto_entry.pack(side=tk.LEFT)
         goto_entry.bind('<Return>', self.goto_entry_do)
+
+    def init_frames(self):
+        self.curr_frame = 0
+        self.frames = {}
+
+        for i, f in enumerate(self.figs):
+            frame = GraphPage(self.container, str(i), fig=self.figs[i])
+            self.frames[i] = frame
+            frame.grid(row=0, column=0, sticky="nsew")
+
+        self.show_frame(self.curr_frame)
 
     def _quit(self):
         self.quit()
@@ -240,6 +244,24 @@ class PlotGUI(tk.Tk):
     def show_frame(self, cont):
         self.curr_frame = cont % len(self.frames)
         self.frames[self.curr_frame].tkraise()
+
+    def dump_figs(self):
+        file = filedialog.asksaveasfilename()
+        with open(file=file, mode='wb') as f:
+            pickle.dump(self.figs, file=f, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def open_figs(self):
+        self.figs = self.load_figs()
+        self.init_frames()
+
+    def add_figs(self):
+        self.figs.extend(self.load_figs())
+        self.init_frames()
+
+    def load_figs(self):
+        file = filedialog.askopenfilename()
+        with open(file=file, mode='rb') as f:
+            return pickle.load(file=f)
 
 
 class GraphPage(tk.Frame):

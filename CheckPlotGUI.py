@@ -2,7 +2,8 @@ from matplotlib.figure import Figure
 # import matplotlib.pyplot as plt
 import PlotGUI as plt
 
-for i in [0, 1]:
+for i in [0]:
+# for i in [0, 1]:
     xlist = [0, 1, 2]
     ylist = [1 + i * 2, 7 + i * 2, 5 + i * 2]
     # figs[i] = Figure()
