@@ -51,6 +51,8 @@ class PlotGUI(tk.Tk):
     def __init__(self, figs, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
 
+        self.protocol("WM_DELETE_WINDOW", self._quit)
+
         # tk.Tk.iconbitmap(self, default="clienticon.ico")
         tk.Tk.wm_title(self, "My PlotGUI")
 
@@ -102,15 +104,24 @@ class PlotGUI(tk.Tk):
         next_button = ttk.Button(self, text="Next", command=self.next_frame)
         next_button.pack(side=tk.LEFT)
 
+    def _quit(self):
+        self.quit()
+        self.destroy()
+
     def compare_figs(self):
-        d = Compare2Dialog(self)
-        if d.result is None:
+        d = SmartDialog(master=self, title='Compare to',
+                        fields=[EA(name='comp2',   label='Enter Figure #', operator=int,   default=None),
+                                EA(name='shift_x', label='Enter Shift X',  operator=float),
+                                EA(name='shift_y', label='Enter Shift Y',  operator=float),
+                                ])
+        print(d)
+        if d.results is None:
             return
-        comp2 = d.result[0]
+        comp2 = d.results['comp2']
         if comp2 is None:
             return
-        shift_x = d.result[1]
-        shift_y = d.result[2]
+        shift_x = d.results['shift_x']
+        shift_y = d.results['shift_y']
 
         new_fig = len(self.figs)
         self.figs[new_fig] = Figure()
@@ -137,10 +148,19 @@ class PlotGUI(tk.Tk):
         frame.grid(row=0, column=0, sticky="nsew")
 
     def enter_scale(self):
-        d = EnterScaleDialog(self)
+        d = SmartDialog(master=self, title='Enter Scale',
+                        fields=[EA(name='xmin_bottom', label='Xmin Bottom', operator=float),
+                                EA(name='xmax_bottom', label='Xmax Bottom', operator=float),
+                                EA(name='ymin_left',   label='Ymin Left',   operator=float),
+                                EA(name='ymax_left',   label='Ymax Left',   operator=float),
+                                EA(name='xmin_top',    label='Xmin Top',    operator=float),
+                                EA(name='xmax_top',    label='Xmax Top',    operator=float),
+                                EA(name='ymin_right',  label='Ymin Right',  operator=float),
+                                EA(name='ymax_right',  label='Ymax Right',  operator=float),
+                                ])
 
     def try_me(self):
-        x = EntryAttributes('bbb', 'aaa', int, 0)
+        x = EntryAttributes('bbb', 'aaa', str, None)
         y = []
         y.append(x)
 
@@ -191,11 +211,24 @@ class GraphPage(tk.Frame):
 
 
 class EntryAttributes():
-    def __init__(self, name, label, operator, default):
+    def __init__(self, name, label, operator=str, default=None):
         self.name = name
         self.label = label
         self.operator = operator
-        self.default = default
+        if default is None:
+            if operator == str:
+                self.default = ''
+            elif operator == int:
+                self.default = 0
+            elif operator == float:
+                self.default = 0.
+            else:
+                self.default = default
+        else:
+            self.default = default
+
+
+EA = EntryAttributes
 
 
 class SmartDialog(Dialog):
@@ -207,97 +240,16 @@ class SmartDialog(Dialog):
         Dialog.__init__(self, master, title)
 
     def body(self, master):
-        for i, entry in enumerate(self.fields):
-            tk.Label(master, text=entry.label).grid(row=i)
-            self.entries[entry.name] = tk.Entry(master)
-            self.entries[entry.name].grid(row=i, column=1)
+        for i, f in enumerate(self.fields):
+            tk.Label(master, text=f.label).grid(row=i)
+            self.entries[f.name] = tk.Entry(master)
+            self.entries[f.name].grid(row=i, column=1)
 
-        # return self.comp2 # initial focus
+        return self.entries[self.fields[0].name] # initial focus
 
     def apply(self):
-        for i, entry in enumerate(self.fields):
+        for i, f in enumerate(self.fields):
             try:
-                self.results[entry.name] = entry.operator(self.entries[entry.name].get())
+                self.results[f.name] = f.operator(self.entries[f.name].get())
             except:
-                self.results[entry.name] = entry.default
-        print(self.results)
-        return self.results
-
-
-class Compare2Dialog(Dialog):
-
-    def body(self, master):
-        tk.Label(master, text="Enter figure #:").grid(row=0)
-        tk.Label(master, text="Enter shift X:").grid(row=1)
-        tk.Label(master, text="Enter shift Y:").grid(row=2)
-        #
-        self.comp2 = tk.Entry(master)
-        self.shift_x = tk.Entry(master)
-        self.shift_y = tk.Entry(master)
-        #
-        self.comp2.grid(row=0, column=1)
-        self.shift_x.grid(row=1, column=1)
-        self.shift_y.grid(row=2, column=1)
-        return self.comp2 # initial focus
-
-    def apply(self):
-        print(self.comp2.get())
-        try:
-            comp2 = int(self.comp2.get())
-        except:
-            comp2 = None
-        print(comp2)
-        try:
-            shift_x = float(self.shift_x.get())
-        except:
-            shift_x = 0.
-        try:
-            shift_y = float(self.shift_y.get())
-        except:
-            shift_y = 0.
-        self.result = comp2, shift_x, shift_y
-
-
-
-
-class EnterScaleDialog(Dialog):
-
-    def body(self, master):
-
-        tk.Label(master, text="Xmin Bottom:").grid(row=0)
-        tk.Label(master, text="Xmax Bottom:").grid(row=1)
-        tk.Label(master, text="Ymin Left:  ").grid(row=2)
-        tk.Label(master, text="Ymax Left:  ").grid(row=3)
-        tk.Label(master, text="Xmin Top:   ").grid(row=4)
-        tk.Label(master, text="Xmax Top:   ").grid(row=5)
-        tk.Label(master, text="Ymin Right: ").grid(row=6)
-        tk.Label(master, text="Ymax Right: ").grid(row=7)
-
-        self.xmin_bottom = tk.Entry(master)
-        self.xmax_bottom = tk.Entry(master)
-        self.ymin_left = tk.Entry(master)
-        self.ymax_left = tk.Entry(master)
-        self.xmin_top = tk.Entry(master)
-        self.xmax_top = tk.Entry(master)
-        self.ymin_right = tk.Entry(master)
-        self.ymax_right = tk.Entry(master)
-
-        self.comp2.grid(row=0, column=1)
-        self.shift_x.grid(row=1, column=1)
-        self.shift_y.grid(row=2, column=1)
-        return self.comp2 # initial focus
-
-    def apply(self):
-        try:
-            comp2 = int(self.comp2.get())
-        except:
-            comp2 = None
-        try:
-            shift_x = float(self.shift_x.get())
-        except:
-            shift_x = 0.
-        try:
-            shift_y = float(self.shift_y.get())
-        except:
-            shift_y = 0.
-        self.result = comp2, shift_x, shift_y
+                self.results[f.name] = f.default
