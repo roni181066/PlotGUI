@@ -103,10 +103,24 @@ class PlotGUI(tk.Tk):
         prev_button.pack(side=tk.LEFT)
         next_button = ttk.Button(self, text="Next", command=self.next_frame)
         next_button.pack(side=tk.LEFT)
+        goto_label = ttk.Label(self, text='Goto Frame')
+        goto_label.pack(side=tk.LEFT)
+        goto_entry = ttk.Entry(self, width=5)
+        goto_entry.pack(side=tk.LEFT)
+        goto_entry.bind('<Return>', self.goto_entry_do)
 
     def _quit(self):
         self.quit()
         self.destroy()
+
+    def goto_entry_do(self, event):
+        num_frame = event.widget.get()
+        event.widget.delete(0)
+        try:
+            num_frame = int(num_frame)
+            self.show_frame(num_frame)
+        except:
+            pass
 
     def compare_figs(self):
         d = SmartDialog(master=self, title='Compare to',
@@ -232,7 +246,7 @@ class GraphPage(tk.Frame):
 
     def __init__(self, parent, num, fig):
         tk.Frame.__init__(self, parent)
-        label = tk.Label(self, text="Graph Page "+str(num), font=LARGE_FONT)
+        label = ttk.Label(self, text="Graph Page "+str(num), font=LARGE_FONT)
         label.pack(pady=10, padx=10)
 
         self.canvas = FigureCanvasTkAgg(fig, self)
@@ -245,11 +259,11 @@ class GraphPage(tk.Frame):
 
 
 class EntryAttributes():
-    def __init__(self, name, label, operator=str, default=None):
+    def __init__(self, name, label, operator=str, default='empty'):
         self.name = name
         self.label = label
         self.operator = operator
-        if default is None:
+        if default == 'empty':
             if operator == str:
                 self.default = ''
             elif operator == int:
@@ -275,8 +289,8 @@ class SmartDialog(Dialog):
 
     def body(self, master):
         for i, f in enumerate(self.fields):
-            tk.Label(master, text=f.label).grid(row=i)
-            self.entries[f.name] = tk.Entry(master)
+            ttk.Label(master, text=f.label).grid(row=i)
+            self.entries[f.name] = ttk.Entry(master)
             self.entries[f.name].grid(row=i, column=1)
 
         return self.entries[self.fields[0].name] # initial focus
