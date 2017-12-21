@@ -78,23 +78,23 @@ class PlotGUI(tk.Tk):
     def init_menubars(self):
         menubar = tk.Menu(self.container)
 
-        file_menu = tk.Menu(menubar, tearoff=1)
-        file_menu.add_command(label="Save settings", command=lambda: popupmsg('Not supported just yet!'))
-        file_menu.add_separator()
+        file_menu = tk.Menu(menubar, tearoff=0)
+        # file_menu.add_command(label="Save settings", command=lambda: popupmsg('Not supported just yet!'))
+        # file_menu.add_separator()
         file_menu.add_command(label="Exit", command=quit)
         menubar.add_cascade(label="File", menu=file_menu)
 
-        view_menu = tk.Menu(menubar, tearoff=1)
+        view_menu = tk.Menu(menubar, tearoff=0)
         view_menu.add_command(label="Enter Scale", command=self.enter_scale)
         menubar.add_cascade(label="View", menu=view_menu)
 
-        combine_menu = tk.Menu(menubar, tearoff=1)
+        combine_menu = tk.Menu(menubar, tearoff=0)
         combine_menu.add_command(label="Compare 2", command=self.compare_figs)
         menubar.add_cascade(label="Combine", menu=combine_menu)
 
-        try_menu = tk.Menu(menubar, tearoff=1)
-        try_menu.add_command(label="Try", command=self.try_me)
-        menubar.add_cascade(label="Try", menu=try_menu)
+        # try_menu = tk.Menu(menubar, tearoff=1)
+        # try_menu.add_command(label="Try", command=self.try_me)
+        # menubar.add_cascade(label="Try", menu=try_menu)
 
         tk.Tk.config(self, menu=menubar)
 
@@ -114,7 +114,6 @@ class PlotGUI(tk.Tk):
                                 EA(name='shift_x', label='Enter Shift X',  operator=float),
                                 EA(name='shift_y', label='Enter Shift Y',  operator=float),
                                 ])
-        print(d)
         if d.results is None:
             return
         comp2 = d.results['comp2']
@@ -128,7 +127,6 @@ class PlotGUI(tk.Tk):
         new_ax = self.figs[new_fig].add_subplot(111)
 
         for ax in self.figs[self.curr_frame].axes:
-            print(ax.get_xbound())
             for line in ax.get_lines():
                 new_line = self.copy_line(line)
                 new_ax.add_line(new_line)
@@ -145,19 +143,55 @@ class PlotGUI(tk.Tk):
 
         frame = GraphPage(self.container, new_fig, fig=self.figs[new_fig])
         self.frames[new_fig] = frame
+        self.curr_frame = new_fig
         frame.grid(row=0, column=0, sticky="nsew")
 
     def enter_scale(self):
         d = SmartDialog(master=self, title='Enter Scale',
-                        fields=[EA(name='xmin_bottom', label='Xmin Bottom', operator=float),
-                                EA(name='xmax_bottom', label='Xmax Bottom', operator=float),
-                                EA(name='ymin_left',   label='Ymin Left',   operator=float),
-                                EA(name='ymax_left',   label='Ymax Left',   operator=float),
-                                EA(name='xmin_top',    label='Xmin Top',    operator=float),
-                                EA(name='xmax_top',    label='Xmax Top',    operator=float),
-                                EA(name='ymin_right',  label='Ymin Right',  operator=float),
-                                EA(name='ymax_right',  label='Ymax Right',  operator=float),
+                        fields=[EA(name='xmin_bottom', label='Xmin Bottom', operator=float, default=None),
+                                EA(name='xmax_bottom', label='Xmax Bottom', operator=float, default=None),
+                                EA(name='ymin_left',   label='Ymin Left',   operator=float, default=None),
+                                EA(name='ymax_left',   label='Ymax Left',   operator=float, default=None),
+                                EA(name='xmin_top',    label='Xmin Top',    operator=float, default=None),
+                                EA(name='xmax_top',    label='Xmax Top',    operator=float, default=None),
+                                EA(name='ymin_right',  label='Ymin Right',  operator=float, default=None),
+                                EA(name='ymax_right',  label='Ymax Right',  operator=float, default=None),
                                 ])
+        for ax in self.figs[self.curr_frame].axes:
+            xpos = ax.xaxis.get_ticks_position()
+            ypos = ax.yaxis.get_ticks_position()
+            xbounds = list(ax.get_xbound())
+            ybounds = list(ax.get_ybound())
+            if xpos == 'bottom':
+                if d.results['xmin_bottom'] is not None:
+                    xbounds[0] = d.results['xmin_bottom']
+                if d.results['xmax_bottom'] is not None:
+                    xbounds[1] = d.results['xmax_bottom']
+            elif xpos == 'top':
+                if d.results['xmin_top'] is not None:
+                    xbounds[0] = d.results['xmin_top']
+                if d.results['xmax_top'] is not None:
+                    xbounds[1] = d.results['xmax_top']
+            else:
+                raise AttributeError('unexpected xpos '+xpos)
+
+            if ypos == 'left':
+                if d.results['ymin_left'] is not None:
+                    ybounds[0] = d.results['ymin_left']
+                if d.results['ymax_left'] is not None:
+                    ybounds[1] = d.results['ymax_left']
+            elif ypos == 'right':
+                if d.results['ymin_right'] is not None:
+                    ybounds[0] = d.results['ymin_right']
+                if d.results['ymax_right'] is not None:
+                    ybounds[1] = d.results['ymax_right']
+            else:
+                raise AttributeError('unexpected ypos '+ypos)
+
+            ax.set_xbound(xbounds)
+            ax.set_ybound(ybounds)
+
+        self.figs[self.curr_frame].canvas.draw()
 
     def try_me(self):
         x = EntryAttributes('bbb', 'aaa', str, None)
@@ -201,13 +235,13 @@ class GraphPage(tk.Frame):
         label = tk.Label(self, text="Graph Page "+str(num), font=LARGE_FONT)
         label.pack(pady=10, padx=10)
 
-        canvas = FigureCanvasTkAgg(fig, self)
-        canvas.show()
-        canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+        self.canvas = FigureCanvasTkAgg(fig, self)
+        self.canvas.show()
+        self.canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
 
-        toolbar = NavigationToolbar2TkAgg(canvas, self)
+        toolbar = NavigationToolbar2TkAgg(self.canvas, self)
         toolbar.update()
-        canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
 
 class EntryAttributes():
