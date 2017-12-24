@@ -258,7 +258,8 @@ class PlotGUI(tk.Tk):
         self.figs.extend(self.load_figs())
         self.init_frames()
 
-    def load_figs(self):
+    @staticmethod
+    def load_figs():
         file = filedialog.askopenfilename()
         with open(file=file, mode='rb') as f:
             return pickle.load(file=f)
