@@ -29,6 +29,10 @@ def figure(*args, **kwargs):
     curr_fig += 1
 
 
+def draw():
+    app = PlotGUI(figs=figs)
+
+
 def show():
     app = PlotGUI(figs=figs)
     app.mainloop()
