@@ -20,22 +20,31 @@ SMALL_FONT = ("Helvetica", 8)
 style.use("ggplot")
 
 figs = []
-curr_fig = 0
 
 
 def figure(*args, **kwargs):
-    global curr_fig
     figs.append(plto.figure(*args, **kwargs))
-    curr_fig += 1
 
 
 def draw():
+    global app
+    global figs
     app = PlotGUI(figs=figs)
+    app.update()
+    app.update_idletasks()
+    figs = []
 
 
 def show():
+    global app
+    global figs
     app = PlotGUI(figs=figs)
     app.mainloop()
+    figs = []
+
+
+# def quit():
+#     app._quit()
 
 
 def popupmsg(msg):
@@ -118,8 +127,10 @@ class PlotGUI(tk.Tk):
         self.show_frame(self.curr_frame)
 
     def _quit(self):
+        global figs
         self.quit()
         self.destroy()
+        figs = []
 
     def goto_entry_do(self, event):
         num_frame = event.widget.get()
