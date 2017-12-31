@@ -1,5 +1,6 @@
 from copy import copy, deepcopy
 import pickle
+import threading, time
 
 import matplotlib
 
@@ -26,25 +27,12 @@ def figure(*args, **kwargs):
     figs.append(plto.figure(*args, **kwargs))
 
 
-def draw():
-    global app
-    global figs
-    app = PlotGUI(figs=figs)
-    app.update()
-    app.update_idletasks()
-    figs = []
-
-
 def show():
     global app
     global figs
     app = PlotGUI(figs=figs)
     app.mainloop()
     figs = []
-
-
-# def quit():
-#     app._quit()
 
 
 def popupmsg(msg):
