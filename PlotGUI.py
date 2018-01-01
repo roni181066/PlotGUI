@@ -43,10 +43,10 @@ def popupmsg(msg):
     popup.mainloop()
 
 
-class PlotGUI(tk.Tk):
+class PlotGUI(tk.Toplevel):
 
     def __init__(self, figs, *args, **kwargs):
-        tk.Tk.__init__(self, *args, **kwargs)
+        tk.Toplevel.__init__(self, *args, **kwargs)
 
         self.protocol("WM_DELETE_WINDOW", self._quit)
 
