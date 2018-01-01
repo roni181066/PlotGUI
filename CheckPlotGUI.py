@@ -2,6 +2,7 @@ from matplotlib.figure import Figure
 # import matplotlib.pyplot as plt
 import PlotGUI as plt
 import time
+import multiprocessing
 
 
 def check_window():
@@ -37,19 +38,16 @@ def check_window():
         # plt.legend(loc=0)
         plt.legend()
         plt.ylabel('yyy')
+    plt.show()
 
 
-check_window()
-# plt.ion()
-# plt.show()
-plt.draw()
-# ans = input('Close window (y/n)')
-# if ans == 'y':
-time.sleep(10)
-# plt.quit()
-check_window()
-# plt.ioff()
-plt.show()
-# time.sleep(10)
-# ans = input('Close window (y/n)')
+if __name__ == '__main__':
+    p = multiprocessing.Process(target=check_window)
+    p.start()
+    p.join()
+
+    time.sleep(10)
+    p = multiprocessing.Process(target=check_window)
+    p.start()
+    p.join()
 

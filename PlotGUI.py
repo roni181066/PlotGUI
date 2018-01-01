@@ -1,6 +1,4 @@
-from copy import copy, deepcopy
 import pickle
-import threading, time
 
 import matplotlib
 
