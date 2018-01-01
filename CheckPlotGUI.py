@@ -44,10 +44,8 @@ def check_window():
 if __name__ == '__main__':
     p = multiprocessing.Process(target=check_window)
     p.start()
-    p.join()
-
+    print('hello')
     time.sleep(10)
     p = multiprocessing.Process(target=check_window)
     p.start()
-    p.join()
 
